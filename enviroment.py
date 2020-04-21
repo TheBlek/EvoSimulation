@@ -1,20 +1,16 @@
 class Tile:
-    ID
 
-    def __init__(ID):
-        self.ID = ID;
+    def __init__(self, ID, x, y):
+        self.ID = ID
+        self.x = x
+        self.y = y
     
-    
-
 
 class Enviroment:
-    Tiles[][] = [][]
 
-    def __init__(width, height):
-        for i in range(width):
-            for j in range(height):
-                self.Tiles[i][j] = Tile(height * (i - 1) + j)
+    def __init__(self, width, height):
+        self.Tiles = [None] * width * height
+        for i in range(width * height):
+            self.Tiles[i] = Tile(i, int(i / width), i % width)
 
 myEnv = Enviroment(10,10)
-print(Enviroment.Tiles[3][5])
-
