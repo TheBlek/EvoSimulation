@@ -23,6 +23,7 @@ class Enviroment:
     def __init__(self, width, height, tilesize):
         self.width = width
         self.height = height
+        self.tilesize = tilesize
         self.Tiles = [None] * width * height
         for i in range(width * height):
             self.Tiles[i] = Tile(i, int(i / width) * tilesize, i % width * tilesize, tilesize)
@@ -32,24 +33,28 @@ class Enviroment:
             tile.draw(qpaiter)
 
 class Animal:
-    def __init__(self,x,y,energy):
+    def __init__(self,x,y,energy, size, env):  
         self.x = x            
         self.y = y
         self.energy = energy
+        self.size = size
+        self.env = env
 
     def draw(self, qpainter):
-        pass
+        brush = QBrush(Qt.blue)
+        qpainter.setBrush(brush)
+        qpainter.drawRect(self.x + self.env.tilesize/4, self.y + self.env.tilesize/4, self.size, self.size)
 
-    def update(self, env):
-        if self.x + 1 < env.height:
-            self.x = self.x + 1
+    def update(self):
+        if self.x + 1 < (self.env.height - 1) * self.env.tilesize:
+            self.x = self.x + self.env.tilesize
             self.energy = self.energy - 1
-        elif self.y + 1 < env.width:
-            self.y = self.y + 1
+        elif self.y + 1 < (self.env.width - 1) * self.env.tilesize:
+            self.y = self.y + self.env.tilesize
             self.energy = self.energy - 1
         elif self.x - 1 > 0:
-            self.x = self.x - 1
+            self.x = self.x - self.env.tilesize
             self.energy = self.energy - 1
         elif self.y - 1 > 0:
-            self.y = self.y - 1
+            self.y = self.y - self.env.tilesize
             self.energy = self.energy - 1
