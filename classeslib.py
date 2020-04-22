@@ -6,7 +6,18 @@ import threading
 import random
 import time
 
-turn_delay = 0.2
+turn_delay = 0.15
+food_size = 10
+
+class Food:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def draw(self, qpainter, camera):
+        brush = QBrush(Qt.green)
+        qpainter.setBrush(brush)
+        qpainter.drawRect(self.x - camera.x, self.y - camera.y, food_size, food_size)
 
 class Tile:
 
