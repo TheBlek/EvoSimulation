@@ -11,8 +11,7 @@ window_width = 600
 window_top = 150
 window_left = 150
 window_title = "Evolution simulation"
-turn_delay = 0.015
-camera_shift = 5
+camera_shift = 3
 env_size = 50
 tile_size = window_width / env_size
 animal_size = tile_size / 2
@@ -21,14 +20,7 @@ class mywindow(QtWidgets.QMainWindow):
 
     def addAnimal(self, x, y, energy):
         self.animals.append(classlib.Animal(x,y,energy, animal_size, self.enviroment))
-
-    def updateAnimals(self):
-        if (self.isActive):
-            for animal in self.animals:
-                animal.update()
-            time.sleep(turn_delay)
-            self.update()
-
+        self.update()
 
     def paintEvent(self, event):
         qpainter = QPainter(self)
@@ -36,25 +28,27 @@ class mywindow(QtWidgets.QMainWindow):
         for animal in self.animals:
             animal.draw(qpainter, self.camera)
         qpainter.end()
-        self.updateAnimals()
 
     def keyPressEvent(self, event):
+        camera_velosity = [0, 0]
         if event.key() == 32: # 32 - Это пробел. Здесь симуляция ставится на паузу
             self.isActive = False
-        elif event.key() == 87:
-            self.camera.move(0,-5)
-        elif event.key() == 83:
-            self.camera.move(0,5)
-        elif event.key() == 65:
-            self.camera.move(-5,0)
-        elif event.key() == 68:
-            self.camera.move(5,0)
+        if event.key() == 87:
+            camera_velosity[1] -= camera_shift
+        if event.key() == 83:
+            camera_velosity[1] += camera_shift
+        if event.key() == 65:
+            camera_velosity[0] -= camera_shift
+        if event.key() == 68:
+            camera_velosity[0] += camera_shift
+        self.camera.move(camera_velosity[0], camera_velosity[1])
+        self.repaint()
         # w - 87; a - 65; s - 83; d - 68;
 
     def keyReleaseEvent(self, event):
         if event.key() == 32: # 32 - Это пробел. Здесь симуляция снимается с паузы
             self.isActive = True
-            self.update()
+        self.update()
 
     def __init__(self):
     
@@ -69,6 +63,8 @@ class mywindow(QtWidgets.QMainWindow):
         self.enviroment = classlib.Enviroment(env_size, env_size, tile_size)
         self.camera = classlib.Camera(0,0)
         self.isActive = True
+        self.animalUpdateThread = classlib.AnimalUpdateThread(self)
+        self.animalUpdateThread.start()
 
         self.InitWindow()
 

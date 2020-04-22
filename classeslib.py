@@ -1,7 +1,12 @@
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtGui import QPainter, QColor, QFont, QBrush
 from PyQt5.QtCore import Qt
+
+import threading 
 import random
+import time
+
+turn_delay = 0.2
 
 class Tile:
 
@@ -12,7 +17,6 @@ class Tile:
         self.size = size
 
     def draw(self, qpainter, camera):
-        color = ["#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])]
         brush = QBrush(Qt.yellow)
         qpainter.setBrush(brush)
         qpainter.drawRect(self.x - camera.x, self.y - camera.y, self.size, self.size)
@@ -71,4 +75,19 @@ class Camera():
     def move(self, x, y):
         self.x += x
         self.y += y
-        
+
+class AnimalUpdateThread(threading.Thread):
+    def __init__(self, widget):
+        super().__init__()
+        self.widget = widget
+        self.lock = threading.Lock()
+
+    def run(self):
+        while True:
+            if (self.widget.isActive):
+                self.lock.acquire()
+                for animal in self.widget.animals:
+                    animal.update()
+                self.lock.release()
+                time.sleep(turn_delay)
+                self.widget.update()
