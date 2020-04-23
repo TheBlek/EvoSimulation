@@ -12,28 +12,30 @@ WINDOW_TOP = 150
 WINDOW_LEFT = 150
 WINDOW_LTITLE = "Evolution simulation"
 CAMERA_SHIFT = 3
-ENV_SIZE = 50
-TILE_SIZE = WINDOW_WIDTH / ENV_SIZE
-ANIMAL_SIZE = TILE_SIZE / 2
+ENV_SIZE = 100
+TILE_SIZE = 5
+ANIMAL_SIZE = 10
 
 class mywindow(QtWidgets.QMainWindow):
 
     def addAnimal(self, x, y, energy):
-        self.animals.append(classlib.Animal(x,y,energy, ANIMAL_SIZE, self.enviroment))
+        self.enviroment.addAnimal(0, 0, 5, ANIMAL_SIZE)
+        self.update()
+
+    def deleteAnimal(self, animal):
+        self.enviroment.deleteAnimal(animal)
         self.update()
 
     def spawnNewFood(self):
-        xRand = random.randint(0, TILE_SIZE * ENV_SIZE)
-        yRand = random.randint(0, TILE_SIZE * ENV_SIZE)
-        self.food.append(classlib.Food(xRand, yRand))
+        self.enviroment.addFood()
         self.update()
 
     def paintEvent(self, event):
         qpainter = QPainter(self)
         self.enviroment.draw(qpainter, self.camera)
-        for animal in self.animals:
+        for animal in self.enviroment.animals:
             animal.draw(qpainter, self.camera)
-        for food in self.food:
+        for food in self.enviroment.foodList:
             food.draw(qpainter, self.camera)
         qpainter.end()
 
@@ -58,6 +60,9 @@ class mywindow(QtWidgets.QMainWindow):
             self.isActive = True
         self.update()
 
+    def closeEvent(self, event):
+        self.animalUpdateThread.stop()
+
     def __init__(self):
 
         super().__init__()
@@ -67,8 +72,6 @@ class mywindow(QtWidgets.QMainWindow):
         self.height = WINDOW_HEIGHT
         self.width = WINDOW_WIDTH
         self.title = WINDOW_LTITLE
-        self.animals = []
-        self.food = []
         self.enviroment = classlib.Enviroment(ENV_SIZE, ENV_SIZE, TILE_SIZE)
         self.camera = classlib.Camera(0, 0)
         self.isActive = True
@@ -87,6 +90,6 @@ app = QtWidgets.QApplication([])
 
 application = mywindow()
 
-application.addAnimal(0, 0, 100)
+application.addAnimal(0, 0, 500)
 
 sys.exit(app.exec())
