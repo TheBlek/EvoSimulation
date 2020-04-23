@@ -12,6 +12,7 @@ food_size = 10
 ENERGY_PER_FOOD = 1000
 START_ENERGY = 1000
 REPRODUCE_COST = 5000
+BASIC_MUTATION_RATE = 0.1
 
 def sign(num):
     return -1 if num < 0 else 1
@@ -78,13 +79,13 @@ class Enviroment:
             self.addFood()
 
 class Animal:
-    def __init__(self,x,y,energy, speed, size, env):  
+    def __init__(self,x,y,energy, speed, size, enviroment):  
         self.x = x            
         self.y = y
         self.energy = energy
         self.speed = speed
         self.size = size
-        self.env = env
+        self.enviroment = enviroment
 
     def draw(self, qpainter, camera):
         brush = QBrush(Qt.blue)
@@ -98,18 +99,18 @@ class Animal:
 
     def update(self):
         self.isDead()
-        if self.energy > 6000:
+        if self.energy > REPRODUCE_COST + 300:
             self.reproduce()
-        if self.env.foodList:
+        if self.enviroment.foodList:
             foodDists = []
-            for food in self.env.foodList:
+            for food in self.enviroment.foodList:
                 tmp = math.sqrt((food.x - self.x)**2 + (food.y - self.y)**2)
                 foodDists.append(tmp)
-            food = self.env.foodList[foodDists.index(min(foodDists))]
+            food = self.enviroment.foodList[foodDists.index(min(foodDists))]
             dist2food = min(foodDists)
             if dist2food <= self.speed:
                 self.x,self.y = food.x,food.y
-                self.energy -= dist2food
+                self.energy -= dist2food * self.speed
                 self.eat(food)
             else:
                 if food.x - self.x != 0 and food.y - self.y != 0:
@@ -122,15 +123,25 @@ class Animal:
                     self.y += y
                     self.energy -= self.speed
                 else:
-                    self.y += self.speed * sign(food.y - self.y)
+                    self.y += self.speed * self.speed * sign(food.y - self.y)
+        else:
+            self.energy -= 3
 
     def eat(self, food):
         self.energy += ENERGY_PER_FOOD
-        self.env.deleteFood(food)
+        self.enviroment.deleteFood(food)
 
     def reproduce(self):
         self.energy -= REPRODUCE_COST
-        self.env.addAnimal(self.x, self.y, self.speed, self.size)
+        if random.random() < BASIC_MUTATION_RATE:
+            mutation_grade = random.random()
+            if random.random() > 0.5:
+                mutation_grade += 1
+            else:
+                mutation_grade -= 1
+            self.enviroment.addAnimal(self.x, self.y, mutation_grade * self.speed, mutation_grade * self.size)
+        else:
+            self.enviroment.addAnimal(self.x, self.y, self.speed, self.size)
 
 class Camera():
     def __init__(self, width_of_vision, height_of_vision, x=0, y=0):

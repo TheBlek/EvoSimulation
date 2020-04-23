@@ -42,7 +42,10 @@ class mywindow(QtWidgets.QMainWindow):
     def keyPressEvent(self, event):
         camera_velosity = [0, 0]
         if event.key() == 32: # 32 - Это пробел. Здесь симуляция ставится на паузу
-            self.isActive = False
+            if self.isActive:
+                self.isActive = False
+            else:
+                self.isActive = True
         if event.key() == 87:
             camera_velosity[1] -= CAMERA_SHIFT
         if event.key() == 83:
@@ -56,9 +59,7 @@ class mywindow(QtWidgets.QMainWindow):
         # w - 87; a - 65; s - 83; d - 68;
 
     def keyReleaseEvent(self, event):
-        if event.key() == 32: # 32 - Это пробел. Здесь симуляция снимается с паузы
-            self.isActive = True
-        self.update()
+        pass
 
     def closeEvent(self, event):
         self.animalUpdateThread.stop()
