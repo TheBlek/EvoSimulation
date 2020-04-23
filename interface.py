@@ -12,20 +12,23 @@ WINDOW_TOP = 150
 WINDOW_LEFT = 150
 WINDOW_LTITLE = "Evolution simulation"
 CAMERA_SHIFT = 3
-ENV_SIZE = 50
-TILE_SIZE = WINDOW_WIDTH / ENV_SIZE
-ANIMAL_SIZE = TILE_SIZE / 2
+ENV_SIZE = 256
+TILE_SIZE = 5
+ANIMAL_SIZE = 10
 
 class mywindow(QtWidgets.QMainWindow):
 
     def addAnimal(self, x, y, energy):
-        self.animals.append(classlib.Animal(x,y,energy, ANIMAL_SIZE, self.enviroment))
+        self.animals.append(classlib.Animal(x,y,energy, 15, ANIMAL_SIZE, self.enviroment))
         self.update()
+
+    def deleteAnimal(self, animal):
+        self.animals.remove(animal)
 
     def spawnNewFood(self):
         xRand = random.randint(0, TILE_SIZE * ENV_SIZE)
         yRand = random.randint(0, TILE_SIZE * ENV_SIZE)
-        self.food.append(classlib.Food(xRand, yRand))
+        self.enviroment.addFood(xRand, yRand)
         self.update()
 
     def paintEvent(self, event):
@@ -33,7 +36,7 @@ class mywindow(QtWidgets.QMainWindow):
         self.enviroment.draw(qpainter, self.camera)
         for animal in self.animals:
             animal.draw(qpainter, self.camera)
-        for food in self.food:
+        for food in self.enviroment.foodList:
             food.draw(qpainter, self.camera)
         qpainter.end()
 
@@ -57,6 +60,9 @@ class mywindow(QtWidgets.QMainWindow):
         if event.key() == 32: # 32 - Это пробел. Здесь симуляция снимается с паузы
             self.isActive = True
         self.update()
+
+    def closeEvent(self, event):
+        self.animalUpdateThread.stop()
 
     def __init__(self):
 
