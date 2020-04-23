@@ -9,6 +9,10 @@ import math
 
 turn_delay = 0.15
 food_size = 10
+ENERGY_PER_FOOD = 1000
+
+def sign(num):
+    return -1 if num < 0 else 1
 
 class Food:
     def __init__(self, x, y):
@@ -55,8 +59,15 @@ class Enviroment:
         qpainter.drawRect(- camera.x, - camera.y, self.height * self.tilesize, self.width * self.tilesize)
         
 
-    def addFood(self, x, y):
-        self.foodList.append(Food(x, y))
+    def addFood(self):
+        xRand = random.randint(0, self.tilesize * self.width)
+        yRand = random.randint(0, self.tilesize * self.height)
+        self.foodList.append(Food(xRand, yRand))
+
+    def deleteFood(self, food):
+        self.foodList.remove(food)
+        for i in range(random.randint(1, 2)):
+            self.addFood()
 
 class Animal:
     def __init__(self,x,y,energy, speed, size, env):  
@@ -82,18 +93,30 @@ class Animal:
         if self.env.foodList:
             foodDists = []
             for food in self.env.foodList:
-                tmp = math.sqrt(abs(food.x - self.x)**2 + abs(food.y - self.y)**2)
+                tmp = math.sqrt((food.x - self.x)**2 + (food.y - self.y)**2)
                 foodDists.append(tmp)
             food = self.env.foodList[foodDists.index(min(foodDists))]
             dist2food = min(foodDists)
             if dist2food <= self.speed:
                 self.x,self.y = food.x,food.y
+                self.energy -= dist2food
+                self.eat(food)
             else:
-                targetTG = abs(food.y - self.y) / abs(food.x - self.x)
-                x = self.speed / (targetTG + 1)
-                y = x * targetTG
-                self.x += x
-                self.y += y
+                if food.x - self.x != 0 and food.y - self.y != 0:
+                    targetTG = abs(food.y - self.y) / abs(food.x - self.x)
+                    x = self.speed / math.sqrt(targetTG ** 2 + 1)
+                    y = x * targetTG
+                    x *= sign(food.x - self.x)
+                    y *= sign(food.y - self.y)
+                    self.x += x
+                    self.y += y
+                    self.energy -= self.speed
+                else:
+                    self.y += self.speed * sign(food.y - self.y)
+
+    def eat(self, food):
+        self.energy += ENERGY_PER_FOOD
+        self.env.deleteFood(food)
 
 class Camera():
     def __init__(self, width_of_vision, height_of_vision, x=0, y=0):

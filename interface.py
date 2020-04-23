@@ -26,9 +26,7 @@ class mywindow(QtWidgets.QMainWindow):
         self.animals.remove(animal)
 
     def spawnNewFood(self):
-        xRand = random.randint(0, TILE_SIZE * ENV_SIZE)
-        yRand = random.randint(0, TILE_SIZE * ENV_SIZE)
-        self.enviroment.addFood(xRand, yRand)
+        self.enviroment.addFood()
         self.update()
 
     def paintEvent(self, event):
@@ -93,6 +91,6 @@ app = QtWidgets.QApplication([])
 
 application = mywindow()
 
-application.addAnimal(0, 0, 100)
+application.addAnimal(0, 0, 500)
 
 sys.exit(app.exec())
