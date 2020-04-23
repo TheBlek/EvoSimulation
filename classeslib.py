@@ -6,16 +6,32 @@ import threading
 import random
 import time
 import math
+import sys
 
-turn_delay = 0.01
+turn_delay = 0
 food_size = 10
 ENERGY_PER_FOOD = 1000
-START_ENERGY = 1000
+START_ENERGY = 100
 REPRODUCE_COST = 5000
 BASIC_MUTATION_RATE = 0.1
+FOOD_SPAWN_RATE = 0.1
 
 def sign(num):
     return -1 if num < 0 else 1
+
+def Dist2Point(x1, y1, x2, y2):
+    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+def Animal2FoodCollision(animal, food):
+    if Dist2Point(animal.x, animal.y, food.x, food.y) < food_size:
+        return True
+    if Dist2Point(animal.x + animal.size, animal.y, food.x, food.y) < food_size:
+        return True
+    if Dist2Point(animal.x, animal.y + animal.size, food.x, food.y) < food_size:
+        return True
+    if Dist2Point(animal.x + animal.size, animal.y + animal.size, food.x, food.y) < food_size:
+        return True
+    return False
 
 class Food:
     def __init__(self, x, y):
@@ -63,7 +79,7 @@ class Enviroment:
         qpainter.drawRect(- camera.x, - camera.y, self.height * self.tilesize, self.width * self.tilesize)
     
     def addAnimal(self, x, y, speed, size):
-        self.animals.append(Animal(x, y, START_ENERGY, speed, size, self))
+        self.animals.append(Animal(x, y, speed, size, self))
 
     def deleteAnimal(self, animal):
         self.animals.remove(animal)
@@ -75,14 +91,12 @@ class Enviroment:
 
     def deleteFood(self, food):
         self.foodList.remove(food)
-        for i in range(random.randint(1, 2)):
-            self.addFood()
 
 class Animal:
-    def __init__(self,x,y,energy, speed, size, enviroment):  
+    def __init__(self, x, y, speed, size, enviroment):  
         self.x = x            
         self.y = y
-        self.energy = energy
+        self.energy = START_ENERGY * size
         self.speed = speed
         self.size = size
         self.enviroment = enviroment
@@ -104,7 +118,7 @@ class Animal:
 
     def update(self):
         self.isDead()
-        if self.energy > REPRODUCE_COST + 300:
+        if self.energy > REPRODUCE_COST * self.size + 300:
             self.reproduce()
         if self.enviroment.foodList:
             foodDists = []
@@ -116,7 +130,6 @@ class Animal:
             if dist2food <= self.speed:
                 self.x,self.y = food.x,food.y
                 self.energy -= dist2food * self.speed
-                self.eat(food)
             else:
                 if food.x - self.x != 0 and food.y - self.y != 0:
                     targetTG = abs(food.y - self.y) / abs(food.x - self.x)
@@ -128,9 +141,9 @@ class Animal:
                     self.y += y
                     self.energy -= self.speed
                 else:
-                    self.y += self.speed * self.speed * sign(food.y - self.y)
+                    self.y += self.speed * self.speed * self.size * sign(food.y - self.y)
         else:
-            self.energy -= 3
+            self.energy -= 0.5 * self.size
 
     def eat(self, food):
         self.energy += ENERGY_PER_FOOD
@@ -142,14 +155,21 @@ class Animal:
         child_size = self.size
         child_color = self.color
         if random.random() < BASIC_MUTATION_RATE:
-            mutation_grade = random.random()
+            mutation_speed_grade = random.random()
+            mutation_size_grade = random.random()
             if random.random() > 0.5:
-                mutation_grade += 1
+                mutation_speed_grade += 1
             else:
-                mutation_grade = 1 - mutation_grade
-            child_speed *= mutation_grade
-            child_size *=  mutation_grade
- 
+                mutation_speed_grade = 1 - mutation_speed_grade
+            if random.random() > 0.5:
+                mutation_size_grade += 1
+            else:
+                mutation_size_grade = 1 - mutation_size_grade
+            child_speed *= mutation_speed_grade
+            child_size *=  mutation_size_grade
+        child_speed = child_speed % 50
+        if child_size < 5:
+            child_size = 5
         self.enviroment.addAnimal(self.x + 1, self.y + 1, child_speed, child_size)
 
 class Camera():
@@ -175,13 +195,25 @@ class AnimalUpdateThread(threading.Thread):
             if (self.widget.isActive):
                 self.lock.acquire()
                 for animal in self.widget.enviroment.animals:
+                    for food in self.widget.enviroment.foodList:
+                        if Animal2FoodCollision(animal, food):
+                            animal.eat(food)
                     try:
                         animal.update()
                     except AssertionError:
                         self.widget.enviroment.deleteAnimal(animal)
+                for i in range(math.floor(FOOD_SPAWN_RATE)):
+                    self.widget.spawnNewFood()
+                if random.random() < FOOD_SPAWN_RATE:
+                    self.widget.spawnNewFood()
+                if len(self.widget.enviroment.animals) == 0:
+                    print("They all are dead!")
+                    self.stop()
+                else:
+                    print(len(self.widget.enviroment.animals), len(self.widget.enviroment.foodList))
                 self.lock.release()
-                time.sleep(turn_delay)
                 self.widget.update()
+                time.sleep(turn_delay)
 
     def stop(self):
         self.isRunning = False

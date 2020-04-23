@@ -76,11 +76,13 @@ class mywindow(QtWidgets.QMainWindow):
         self.enviroment = classlib.Enviroment(ENV_SIZE, ENV_SIZE, TILE_SIZE)
         self.camera = classlib.Camera(0, 0)
         self.isActive = True
-        self.animalUpdateThread = classlib.AnimalUpdateThread(self)
-        self.animalUpdateThread.start()
 
         self.InitWindow()
         self.spawnNewFood()
+        self.addAnimal(0, 0, 500)
+
+        self.animalUpdateThread = classlib.AnimalUpdateThread(self)
+        self.animalUpdateThread.start()
 
     def InitWindow(self):
         self.setWindowTitle(self.title)
@@ -90,7 +92,5 @@ class mywindow(QtWidgets.QMainWindow):
 app = QtWidgets.QApplication([])
 
 application = mywindow()
-
-application.addAnimal(0, 0, 500)
 
 sys.exit(app.exec())
