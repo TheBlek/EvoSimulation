@@ -7,9 +7,11 @@ import random
 import time
 import math
 
-turn_delay = 0.15
+turn_delay = 0.05
 food_size = 10
 ENERGY_PER_FOOD = 1000
+START_ENERGY = 1000
+REPRODUCE_COST = 5000
 
 def sign(num):
     return -1 if num < 0 else 1
@@ -48,6 +50,7 @@ class Enviroment:
         self.tilesize = tilesize
         self.Tiles = [None] * width * height
         self.foodList = []
+        self.animals =[]
         for i in range(width * height):
             self.Tiles[i] = Tile(i, int(i / width) * tilesize, i % width * tilesize, tilesize)
 
@@ -57,7 +60,12 @@ class Enviroment:
         qpainter.setPen(pen)
         qpainter.setBrush(brush)
         qpainter.drawRect(- camera.x, - camera.y, self.height * self.tilesize, self.width * self.tilesize)
-        
+    
+    def addAnimal(self, x, y, speed, size):
+        self.animals.append(Animal(x, y, START_ENERGY, speed, size, self))
+
+    def deleteAnimal(self, animal):
+        self.animals.remove(animal)
 
     def addFood(self):
         xRand = random.randint(0, self.tilesize * self.width)
@@ -90,6 +98,8 @@ class Animal:
 
     def update(self):
         self.isDead()
+        if self.energy > 6000:
+            self.reproduce()
         if self.env.foodList:
             foodDists = []
             for food in self.env.foodList:
@@ -118,6 +128,10 @@ class Animal:
         self.energy += ENERGY_PER_FOOD
         self.env.deleteFood(food)
 
+    def reproduce(self):
+        self.energy -= REPRODUCE_COST
+        self.env.addAnimal(self.x, self.y, self.speed, self.size)
+
 class Camera():
     def __init__(self, width_of_vision, height_of_vision, x=0, y=0):
         self.x = 0
@@ -140,11 +154,11 @@ class AnimalUpdateThread(threading.Thread):
         while self.isRunning:
             if (self.widget.isActive):
                 self.lock.acquire()
-                for animal in self.widget.animals:
+                for animal in self.widget.enviroment.animals:
                     try:
                         animal.update()
                     except AssertionError:
-                        self.widget.deleteAnimal(animal)
+                        self.widget.enviroment.deleteAnimal(animal)
                 self.lock.release()
                 time.sleep(turn_delay)
                 self.widget.update()

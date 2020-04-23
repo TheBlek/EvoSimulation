@@ -12,18 +12,19 @@ WINDOW_TOP = 150
 WINDOW_LEFT = 150
 WINDOW_LTITLE = "Evolution simulation"
 CAMERA_SHIFT = 3
-ENV_SIZE = 256
+ENV_SIZE = 100
 TILE_SIZE = 5
 ANIMAL_SIZE = 10
 
 class mywindow(QtWidgets.QMainWindow):
 
     def addAnimal(self, x, y, energy):
-        self.animals.append(classlib.Animal(x,y,energy, 15, ANIMAL_SIZE, self.enviroment))
+        self.enviroment.addAnimal(0, 0, 5, ANIMAL_SIZE)
         self.update()
 
     def deleteAnimal(self, animal):
-        self.animals.remove(animal)
+        self.enviroment.deleteAnimal(animal)
+        self.update()
 
     def spawnNewFood(self):
         self.enviroment.addFood()
@@ -32,7 +33,7 @@ class mywindow(QtWidgets.QMainWindow):
     def paintEvent(self, event):
         qpainter = QPainter(self)
         self.enviroment.draw(qpainter, self.camera)
-        for animal in self.animals:
+        for animal in self.enviroment.animals:
             animal.draw(qpainter, self.camera)
         for food in self.enviroment.foodList:
             food.draw(qpainter, self.camera)
@@ -71,8 +72,6 @@ class mywindow(QtWidgets.QMainWindow):
         self.height = WINDOW_HEIGHT
         self.width = WINDOW_WIDTH
         self.title = WINDOW_LTITLE
-        self.animals = []
-        self.food = []
         self.enviroment = classlib.Enviroment(ENV_SIZE, ENV_SIZE, TILE_SIZE)
         self.camera = classlib.Camera(0, 0)
         self.isActive = True
