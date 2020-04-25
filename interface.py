@@ -1,7 +1,9 @@
 import random
 import sys
-import classeslib as classlib
 
+import pyqtgraph as pg
+import numpy as np
+import classeslib
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QPainter, QColor, QFont
 from PyQt5.QtCore import Qt
@@ -19,7 +21,7 @@ ANIMAL_SIZE = 10
 class mywindow(QtWidgets.QMainWindow): # Класс с основным окном
 
     def addAnimal(self, x, y, energy): # Функция, которая добавляет животное с заданными параметрами
-        self.enviroment.addAnimal(0, 0, 5, ANIMAL_SIZE)
+        self.enviroment.addAnimal(x, y, 5, ANIMAL_SIZE)
         self.update()
 
     def deleteAnimal(self, animal): # Функция, которая удаляет животное, переданное в функцию
@@ -27,6 +29,7 @@ class mywindow(QtWidgets.QMainWindow): # Класс с основным окно
         self.update()
 
     def paintEvent(self, event):
+        self.UpdateGraph()
         qpainter = QPainter(self)
         self.enviroment.draw(qpainter, self.camera) # Отрисовываем окр среду
         for animal in self.enviroment.animals: # В этом цикле отрисовываются все животные
@@ -65,14 +68,15 @@ class mywindow(QtWidgets.QMainWindow): # Класс с основным окно
         self.height = WINDOW_HEIGHT
         self.width = WINDOW_WIDTH
         self.title = WINDOW_TITLE
-        self.enviroment = classlib.Enviroment(ENV_SIZE, ENV_SIZE, TILE_SIZE) # Инициализируем окр среду
-        self.camera = classlib.Camera(0, 0) # Инициализируем камеру
+        self.enviroment = classeslib.Enviroment(ENV_SIZE, ENV_SIZE, TILE_SIZE) # Инициализируем окр среду
+        self.camera = classeslib.Camera(0, 0) # Инициализируем камеру
         self.isActive = True # Запускаем симуляцию
 
         self.InitWindow() # Инициализируем окно
+        self.InitGraph()
         self.addAnimal(0, 0, 500) # Создаем начальное животное
 
-        self.animalUpdateThread = classlib.AnimalUpdateThread(self) # Инициализируем поток, который обрабатывает изменения 
+        self.animalUpdateThread = classeslib.AnimalUpdateThread(self) # Инициализируем поток, который обрабатывает изменения 
         self.animalUpdateThread.start() # Запускаем поток
 
     def InitWindow(self):
@@ -80,8 +84,22 @@ class mywindow(QtWidgets.QMainWindow): # Класс с основным окно
         self.setGeometry(self.top, self.left, self.height, self.width)
         self.show()
 
+    def InitGraph(self):
+        title = "Population"
+        self.plt = pg.plot()
+        self.plt.setTitle(title)
+        self.plt.setLabel('left', 'Value', units='V')
+        self.plt.setLabel('bottom', 'Time', units='s')
+
+    def UpdateGraph(self):
+        x = range(0, self.enviroment.time)
+        c = self.plt.plot(x, self.enviroment.population, pen='r', name='main animal', clear=True)
+
+
 app = QtWidgets.QApplication([])
 
 application = mywindow()
+if sys.flags.interactive != 1 or not hasattr(pg.QtCore, 'PYQT_VERSION'):
+    pg.QtGui.QApplication.exec_()
 
 sys.exit(app.exec())

@@ -8,7 +8,7 @@ import time
 import math
 import sys
 
-turn_delay = 0
+turn_delay = 0.01
 food_size = 10
 ENERGY_PER_FOOD = 1000
 START_ENERGY = 100
@@ -67,6 +67,7 @@ class Enviroment: # Класс окружающей среды
         self.foodList = []
         self.animals =[]
         self.time = 0
+        self.population = []
         for i in range(width * height):
             self.Tiles[i] = Tile(i, int(i / width) * tilesize, i % width * tilesize, tilesize)
 
@@ -193,6 +194,8 @@ class AnimalUpdateThread(threading.Thread):
         while self.isRunning:
             if (self.widget.isActive):
                 self.lock.acquire()
+                if len(self.widget.enviroment.animals) == 0:
+                    self.stop()
                 for animal in self.widget.enviroment.animals:
                     for food in self.widget.enviroment.foodList:
                         if Animal2FoodCollision(animal, food):
@@ -201,12 +204,12 @@ class AnimalUpdateThread(threading.Thread):
                         animal.update()
                     except AssertionError:
                         self.widget.enviroment.deleteAnimal(animal)
-
                 for i in range(math.floor(FOOD_SPAWN_RATE)):
                     self.widget.enviroment.addFood()
                 if random.random() < FOOD_SPAWN_RATE:
                     self.widget.enviroment.addFood()
-                self.widget.enviroment.time += 1    
+                self.widget.enviroment.time += 1
+                self.widget.enviroment.population.append(len(self.widget.enviroment.animals))
                 self.lock.release()
                 self.widget.update()
                 time.sleep(turn_delay)

@@ -1,24 +1,23 @@
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+import pyqtgraph as pg
+import pyqtgraph.exporters
 import numpy as np
-import time
-import random
+import sys
 
-fig = plt.figure()
-ax = plt.axes(xlim=(0, 2), ylim=(-2, 2))
-line, = plt.plot([],[], lw=3)
-global y
-y = np.array([])
+theTitle = "My first plot"
+y = [0, 2, 3, 4, 2]
+x = range(0, 5)
 
-def init():
-    line.set_data([],[])
-    return line, 
-def animate(i):
-    global y
-    x = np.linspace(0, i, i * 1000)
-    #y = np.sin(2 * np.pi * (x + 0.01 * i))
-    y.append(i)
-    line.set_data(x,y)
-    return line, 
-anim = animation.FuncAnimation(fig, animate,init_func=init, frames=200, interval=20)
-plt.show()
+plt = pg.plot()
+plt.addLegend()
+
+plt.setLabel('left', 'Value', units='V')
+plt.setLabel('bottom', 'Time', units='s')
+
+c1 = plt.plot(x, y, pen='b', name='money')
+
+y = [0, 1, 5, 4, 2, 9]
+x = range(0, 6)
+
+c1 = plt.plot(x, y, pen='r', name='money')
+
+pg.QtGui.QApplication.exec_()
