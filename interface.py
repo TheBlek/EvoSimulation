@@ -35,7 +35,7 @@ class mywindow(QtWidgets.QMainWindow):
         self.enviroment.draw(qpainter, self.camera)
         for animal in self.enviroment.animals:
             animal.draw(qpainter, self.camera)
-        for food in self.enviroment.foodList:
+        for food in self.enviroment.foodListenviroment.foodList:
             food.draw(qpainter, self.camera)
         qpainter.end()
 
