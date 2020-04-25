@@ -6,7 +6,7 @@ import random
 import time
 import math
 
-turn_delay = 0.01
+turn_delay = 0.05
 food_size = 10
 ENERGY_PER_FOOD = 1000
 START_ENERGY = 1000
@@ -86,14 +86,9 @@ class Animal:
         self.speed = speed
         self.size = size
         self.enviroment = enviroment
-        color = self.speed ** 6
-        color = math.floor(color)
-        color = color % 16711680
-        color = hex(color).split('x')[-1]
-        self.color = '#' + '0' * (6 - len(color)) + color
 
     def draw(self, qpainter, camera):
-        brush = QBrush(QColor(self.color))
+        brush = QBrush(Qt.blue)
         qpainter.setBrush(brush)
         yCoord = self.y - camera.y
         xCoord = self.x - camera.x
@@ -131,6 +126,8 @@ class Animal:
                     self.y += self.speed * self.speed * sign(food.y - self.y)
         else:
             self.energy -= 3
+        AnimalDists = []
+        
 
     def eat(self, food):
         self.energy += ENERGY_PER_FOOD
@@ -138,19 +135,15 @@ class Animal:
 
     def reproduce(self):
         self.energy -= REPRODUCE_COST
-        child_speed = self.speed
-        child_size = self.size
-        child_color = self.color
         if random.random() < BASIC_MUTATION_RATE:
             mutation_grade = random.random()
             if random.random() > 0.5:
                 mutation_grade += 1
             else:
-                mutation_grade = 1 - mutation_grade
-            child_speed *= mutation_grade
-            child_size *=  mutation_grade
- 
-        self.enviroment.addAnimal(self.x + 1, self.y + 1, child_speed, child_size)
+                mutation_grade -= 1
+            self.enviroment.addAnimal(self.x, self.y, mutation_grade * self.speed, mutation_grade * self.size)
+        else:
+            self.enviroment.addAnimal(self.x, self.y, self.speed, self.size)
 
 class Camera():
     def __init__(self, width_of_vision, height_of_vision, x=0, y=0):
@@ -185,4 +178,3 @@ class AnimalUpdateThread(threading.Thread):
 
     def stop(self):
         self.isRunning = False
-
