@@ -10,59 +10,51 @@ WINDOW_HEIGHT = 800
 WINDOW_WIDTH = 600
 WINDOW_TOP = 150
 WINDOW_LEFT = 150
-WINDOW_LTITLE = "Evolution simulation"
+WINDOW_TITLE = "Evolution simulation"
 CAMERA_SHIFT = 3
 ENV_SIZE = 100
 TILE_SIZE = 5
 ANIMAL_SIZE = 10
 
-class mywindow(QtWidgets.QMainWindow):
+class mywindow(QtWidgets.QMainWindow): # Класс с основным окном
 
-    def addAnimal(self, x, y, energy):
+    def addAnimal(self, x, y, energy): # Функция, которая добавляет животное с заданными параметрами
         self.enviroment.addAnimal(0, 0, 5, ANIMAL_SIZE)
         self.update()
 
-    def deleteAnimal(self, animal):
+    def deleteAnimal(self, animal): # Функция, которая удаляет животное, переданное в функцию
         self.enviroment.deleteAnimal(animal)
-        self.update()
-
-    def spawnNewFood(self):
-        self.enviroment.addFood()
         self.update()
 
     def paintEvent(self, event):
         qpainter = QPainter(self)
-        self.enviroment.draw(qpainter, self.camera)
-        for animal in self.enviroment.animals:
+        self.enviroment.draw(qpainter, self.camera) # Отрисовываем окр среду
+        for animal in self.enviroment.animals: # В этом цикле отрисовываются все животные
             animal.draw(qpainter, self.camera)
-        for food in self.enviroment.foodListenviroment.foodList:
+        for food in self.enviroment.foodList: # В этом цикле отрисовываутся вся еда
             food.draw(qpainter, self.camera)
         qpainter.end()
 
     def keyPressEvent(self, event):
         camera_velosity = [0, 0]
-        if event.key() == 32: # 32 - Это пробел. Здесь симуляция ставится на паузу
-            if self.isActive:
+        if event.key() == 32: # 32 - Это пробел. Здесь если симуляция стояла на паузе, то запускается,
+            if self.isActive: # если нет - останавливается
                 self.isActive = False
             else:
                 self.isActive = True
-        if event.key() == 87:
+        if event.key() == 87: # 87 - это w. Здесь камера сдвигается вверх
             camera_velosity[1] -= CAMERA_SHIFT
-        if event.key() == 83:
+        if event.key() == 83: # 83 - это s. Здесь камера сдвигается вниз
             camera_velosity[1] += CAMERA_SHIFT
-        if event.key() == 65:
+        if event.key() == 65: # 65 - это a. Здесь камера сдвигается влево
             camera_velosity[0] -= CAMERA_SHIFT
-        if event.key() == 68:
+        if event.key() == 68: # 68 - это d. Здесь камера сдвигается вправо
             camera_velosity[0] += CAMERA_SHIFT
         self.camera.move(camera_velosity[0], camera_velosity[1])
         self.repaint()
-        # w - 87; a - 65; s - 83; d - 68;
-
-    def keyReleaseEvent(self, event):
-        pass
 
     def closeEvent(self, event):
-        self.animalUpdateThread.stop()
+        self.animalUpdateThread.stop() # Перед выключением - подаем потоку сигнал выключиться
 
     def __init__(self):
 
@@ -72,15 +64,16 @@ class mywindow(QtWidgets.QMainWindow):
         self.left = WINDOW_LEFT
         self.height = WINDOW_HEIGHT
         self.width = WINDOW_WIDTH
-        self.title = WINDOW_LTITLE
-        self.enviroment = classlib.Enviroment(ENV_SIZE, ENV_SIZE, TILE_SIZE)
-        self.camera = classlib.Camera(0, 0)
-        self.isActive = True
-        self.animalUpdateThread = classlib.AnimalUpdateThread(self)
-        self.animalUpdateThread.start()
+        self.title = WINDOW_TITLE
+        self.enviroment = classlib.Enviroment(ENV_SIZE, ENV_SIZE, TILE_SIZE) # Инициализируем окр среду
+        self.camera = classlib.Camera(0, 0) # Инициализируем камеру
+        self.isActive = True # Запускаем симуляцию
 
-        self.InitWindow()
-        self.spawnNewFood()
+        self.InitWindow() # Инициализируем окно
+        self.addAnimal(0, 0, 500) # Создаем начальное животное
+
+        self.animalUpdateThread = classlib.AnimalUpdateThread(self) # Инициализируем поток, который обрабатывает изменения 
+        self.animalUpdateThread.start() # Запускаем поток
 
     def InitWindow(self):
         self.setWindowTitle(self.title)

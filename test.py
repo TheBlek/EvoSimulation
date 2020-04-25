@@ -1,16 +1,24 @@
-while True:
-    a = int(input())
-    b = a ** 4
-    b = b % 16711680
-    b = hex(b).split('x')[-1]
-    b = '#' + '0' * (6 - len(b)) + b
-    print(b)
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import numpy as np
+import time
+import random
 
+fig = plt.figure()
+ax = plt.axes(xlim=(0, 2), ylim=(-2, 2))
+line, = plt.plot([],[], lw=3)
+global y
+y = np.array([])
 
-
-#dec_color = int(self.color[1:7], 16)
-#dec_color *= 16
-#dec_color = dec_color % 16711680
-#dec_color = hex(dec_color).split('x')[-1]
-#child_color = '#' + '0' * (6 - len(dec_color)) + dec_color
-
+def init():
+    line.set_data([],[])
+    return line, 
+def animate(i):
+    global y
+    x = np.linspace(0, i, i * 1000)
+    #y = np.sin(2 * np.pi * (x + 0.01 * i))
+    y.append(i)
+    line.set_data(x,y)
+    return line, 
+anim = animation.FuncAnimation(fig, animate,init_func=init, frames=200, interval=20)
+plt.show()
