@@ -16,42 +16,41 @@ REPRODUCE_COST = 5000
 BASIC_MUTATION_RATE = 0.1
 FOOD_SPAWN_RATE = 0.1
 
-def sign(num):
+def sign(num): # Функция возвращения знака числа. Если 0 - возвращает 1
     return -1 if num < 0 else 1
 
-def Dist2Point(x1, y1, x2, y2):
-    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+def Dist2Point(x1, y1, x2, y2): # Функция, которая возвращает расстояние между двумя точками по их координатам
+    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2) # Использована простая теорема пифагора
 
-def Animal2FoodCollision(animal, food):
-    if Dist2Point(animal.x, animal.y, food.x, food.y) < food_size:
+def Animal2FoodCollision(animal, food): # Функция, которая обрабатывает есть ли столкновение между животным и едой 
+    if Dist2Point(animal.x, animal.y, food.x, food.y) < food_size: # Проверяем расстояние от левого верхнего угла
         return True
-    if Dist2Point(animal.x + animal.size, animal.y, food.x, food.y) < food_size:
+    if Dist2Point(animal.x + animal.size, animal.y, food.x, food.y) < food_size: # Проверяем расстояние от правого верхнего угла
         return True
-    if Dist2Point(animal.x, animal.y + animal.size, food.x, food.y) < food_size:
+    if Dist2Point(animal.x, animal.y + animal.size, food.x, food.y) < food_size: # Проверяем расстояние от левого нижнего угла
         return True
-    if Dist2Point(animal.x + animal.size, animal.y + animal.size, food.x, food.y) < food_size:
+    if Dist2Point(animal.x + animal.size, animal.y + animal.size, food.x, food.y) < food_size: # Проверяем расстояние от правого нижнего угла
         return True
     return False
 
-class Food:
-    def __init__(self, x, y):
+class Food: # Класс еды
+    def __init__(self, x, y): # При инициализации просит только координаты
         self.x = x
         self.y = y
 
-    def draw(self, qpainter, camera):
+    def draw(self, qpainter, camera): # Функция, отвечающая за рисование еды
         brush = QBrush(Qt.green)
         qpainter.setBrush(brush)
         qpainter.drawEllipse(self.x - camera.x, self.y - camera.y, food_size, food_size)
 
-class Tile:
-
-    def __init__(self, ID, x, y, size):
+class Tile: # Класс клетки
+    def __init__(self, ID, x, y, size): # На вход просит координаты, размер и id
         self.ID = ID
         self.x = x
         self.y = y
         self.size = size
 
-    def draw(self, qpainter, camera):
+    def draw(self, qpainter, camera): # Функция, отвечающая за рисование клетки, пока не изпользуется 
         brush = QBrush(Qt.yellow)
         pen = QPen(Qt.yellow)
         qpainter.setPen(pen)
@@ -59,8 +58,7 @@ class Tile:
         qpainter.drawRect(self.x - camera.x, self.y - camera.y, self.size, self.size)
     
 
-class Enviroment:
-
+class Enviroment: # Класс окружающей среды
     def __init__(self, width, height, tilesize):
         self.width = width
         self.height = height
@@ -68,28 +66,29 @@ class Enviroment:
         self.Tiles = [None] * width * height
         self.foodList = []
         self.animals =[]
+        self.time = 0
         for i in range(width * height):
             self.Tiles[i] = Tile(i, int(i / width) * tilesize, i % width * tilesize, tilesize)
 
-    def draw(self, qpainter, camera):
+    def draw(self, qpainter, camera): # Функция, отвечающаа за рисование окружающей среды
         brush = QBrush(Qt.yellow)
         pen = QPen(Qt.yellow)
         qpainter.setPen(pen)
-        qpainter.setBrush(brush)
+        qpainter.setBrush(brush) # Окр среда рисуется как один прямоугольник
         qpainter.drawRect(- camera.x, - camera.y, self.height * self.tilesize, self.width * self.tilesize)
     
-    def addAnimal(self, x, y, speed, size):
+    def addAnimal(self, x, y, speed, size): # Функция, которая добавляет в окр среду животное с переданными параметрами
         self.animals.append(Animal(x, y, speed, size, self))
 
-    def deleteAnimal(self, animal):
+    def deleteAnimal(self, animal): # Функция, которая удалает переданное животное из окр среды
         self.animals.remove(animal)
 
-    def addFood(self):
+    def addFood(self): # Функция, которая добавляет еду в случайном месте с окр среде
         xRand = random.randint(0, self.tilesize * self.width)
         yRand = random.randint(0, self.tilesize * self.height)
         self.foodList.append(Food(xRand, yRand))
 
-    def deleteFood(self, food):
+    def deleteFood(self, food): # Функция, которая удаляет из окр среды переданную еду 
         self.foodList.remove(food)
 
 class Animal:
@@ -202,15 +201,12 @@ class AnimalUpdateThread(threading.Thread):
                         animal.update()
                     except AssertionError:
                         self.widget.enviroment.deleteAnimal(animal)
+
                 for i in range(math.floor(FOOD_SPAWN_RATE)):
-                    self.widget.spawnNewFood()
+                    self.widget.enviroment.addFood()
                 if random.random() < FOOD_SPAWN_RATE:
-                    self.widget.spawnNewFood()
-                if len(self.widget.enviroment.animals) == 0:
-                    print("They all are dead!")
-                    self.stop()
-                else:
-                    print(len(self.widget.enviroment.animals), len(self.widget.enviroment.foodList))
+                    self.widget.enviroment.addFood()
+                self.widget.enviroment.time += 1    
                 self.lock.release()
                 self.widget.update()
                 time.sleep(turn_delay)
