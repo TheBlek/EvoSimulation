@@ -8,7 +8,7 @@ import time
 import math
 import sys
 
-turn_delay = 3
+turn_delay = 0.1
 food_size = 10
 ENERGY_PER_FOOD = 1000
 START_ENERGY = 100
