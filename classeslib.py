@@ -1,114 +1,131 @@
+from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtGui import QPainter, QColor, QFont, QBrush, QPen
 from PyQt5.QtCore import Qt
 
-import threading 
+import threading
 import random
 import time
 import math
 import sys
 
-turn_delay = 0
+turn_delay = 3
 food_size = 10
 ENERGY_PER_FOOD = 1000
 START_ENERGY = 100
 REPRODUCE_COST = 5000
 BASIC_MUTATION_RATE = 0.1
 FOOD_SPAWN_RATE = 0.1
+IDan = 0
 
-def sign(num): # Функция возвращения знака числа. Если 0 - возвращает 1
+
+def sign(num):  # Функция возвращения знака числа. Если 0 - возвращает 1
     return -1 if num < 0 else 1
 
-def Dist2Point(x1, y1, x2, y2): # Функция, которая возвращает расстояние между двумя точками по их координатам
-    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2) # Использована простая теорема пифагора
 
-def Animal2FoodCollision(animal, food): # Функция, которая обрабатывает есть ли столкновение между животным и едой 
-    if Dist2Point(animal.x, animal.y, food.x, food.y) < food_size: # Проверяем расстояние от левого верхнего угла
+def Dist2Point(x1, y1, x2, y2):  # Функция, которая возвращает расстояние между двумя точками по их координатам
+    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)  # Использована простая теорема пифагора
+
+
+def Animal2FoodCollision(animal, food):  # Функция, которая обрабатывает есть ли столкновение между животным и едой
+    if Dist2Point(animal.x, animal.y, food.x, food.y) < food_size:  # Проверяем расстояние от левого верхнего угла
         return True
-    if Dist2Point(animal.x + animal.size, animal.y, food.x, food.y) < food_size: # Проверяем расстояние от правого верхнего угла
+    if Dist2Point(animal.x + animal.size, animal.y, food.x,
+                  food.y) < food_size:  # Проверяем расстояние от правого верхнего угла
         return True
-    if Dist2Point(animal.x, animal.y + animal.size, food.x, food.y) < food_size: # Проверяем расстояние от левого нижнего угла
+    if Dist2Point(animal.x, animal.y + animal.size, food.x,
+                  food.y) < food_size:  # Проверяем расстояние от левого нижнего угла
         return True
-    if Dist2Point(animal.x + animal.size, animal.y + animal.size, food.x, food.y) < food_size: # Проверяем расстояние от правого нижнего угла
+    if Dist2Point(animal.x + animal.size, animal.y + animal.size, food.x,
+                  food.y) < food_size:  # Проверяем расстояние от правого нижнего угла
         return True
     return False
 
-class Food: # Класс еды
-    def __init__(self, x, y): # При инициализации просит только координаты
+
+class Food:  # Класс еды
+    def __init__(self, x, y):  # При инициализации просит только координаты
         self.x = x
         self.y = y
 
-    def draw(self, qpainter, camera): # Функция, отвечающая за рисование еды
+    def draw(self, qpainter, camera):  # Функция, отвечающая за рисование еды
         brush = QBrush(Qt.green)
         qpainter.setBrush(brush)
         qpainter.drawEllipse(self.x - camera.x, self.y - camera.y, food_size, food_size)
 
-class Tile: # Класс клетки
-    def __init__(self, ID, x, y, size): # На вход просит координаты, размер и id
+
+class Tile:  # Класс клетки
+    def __init__(self, ID, x, y, size):  # На вход просит координаты, размер и id
         self.ID = ID
         self.x = x
         self.y = y
         self.size = size
 
-
-    def draw(self, qpainter, camera): # Функция, отвечающая за рисование клетки, пока не изпользуется
+    def draw(self, qpainter, camera):  # Функция, отвечающая за рисование клетки, пока не изпользуется
         brush = QBrush(Qt.yellow)
         pen = QPen(Qt.yellow)
         qpainter.setPen(pen)
         qpainter.setBrush(brush)
         qpainter.drawRect(self.x - camera.x, self.y - camera.y, self.size, self.size)
 
-class Enviroment: # Класс окружающей среды
+
+class Enviroment:  # Класс окружающей среды
     def __init__(self, width, height, tilesize):
         self.width = width
         self.height = height
         self.tilesize = tilesize
         self.Tiles = [None] * width * height
         self.foodList = []
-        self.animals =[]
+        self.animals = []
         self.time = 0
         for i in range(width * height):
             self.Tiles[i] = Tile(i, int(i / width) * tilesize, i % width * tilesize, tilesize)
-        
 
-    def draw(self, qpainter, camera): # Функция, отвечающаа за рисование окружающей среды
+    def draw(self, qpainter, camera):  # Функция, отвечающаа за рисование окружающей среды
         brush = QBrush(Qt.yellow)
         pen = QPen(Qt.yellow)
         qpainter.setPen(pen)
-        qpainter.setBrush(brush) # Окр среда рисуется как один прямоугольник
+        qpainter.setBrush(brush)  # Окр среда рисуется как один прямоугольник
         qpainter.drawRect(- camera.x, - camera.y, self.height * self.tilesize, self.width * self.tilesize)
-    
-    def addAnimal(self, x, y, speed, size): # Функция, которая добавляет в окр среду животное с переданными параметрами
+
+    def addAnimal(self, x, y, speed, size):  # Функция, которая добавляет в окр среду животное с переданными параметрами
         self.animals.append(Animal(x, y, speed, size, self))
 
-    def deleteAnimal(self, animal): # Функция, которая удалает переданное животное из окр среды
+    def deleteAnimal(self, animal):  # Функция, которая удалает переданное животное из окр среды
         self.animals.remove(animal)
 
-    def addFood(self): # Функция, которая добавляет еду в случайном месте с окр среде
+    def addFood(self):  # Функция, которая добавляет еду в случайном месте с окр среде
         xRand = random.randint(0, self.tilesize * self.width)
         yRand = random.randint(0, self.tilesize * self.height)
         self.foodList.append(Food(xRand, yRand))
 
-    def deleteFood(self, food): # Функция, которая удаляет из окр среды переданную еду 
+    def deleteFood(self, food):  # Функция, которая удаляет из окр среды переданную еду
         self.foodList.remove(food)
 
+
 class Animal:
-    def __init__(self, x, y, speed, size, enviroment):  
-        self.x = x            
+    def __init__(self, x, y, speed, size, enviroment):
+        self.x = x
         self.y = y
         self.energy = START_ENERGY * size
         self.speed = speed
         self.size = size
         self.enviroment = enviroment
+        self.ID = IDan + 1
+
+        color = self.speed ** 6
+        color = math.floor(color)
+        color = color % 16711680
+        color = hex(color).split('x')[-1]
+        self.color = '#' + '0' * (6 - len(color)) + color
 
     def draw(self, qpainter, camera):
-        brush = QBrush(Qt.blue)
+        brush = QBrush(QColor(self.color))
         qpainter.setBrush(brush)
         yCoord = self.y - camera.y
         xCoord = self.x - camera.x
         qpainter.drawRect(xCoord, yCoord, self.size, self.size)
 
     def isDead(self):
-        assert(self.energy > 0)
+        assert (self.energy > 0)
 
     def update(self):
         self.isDead()
@@ -117,12 +134,12 @@ class Animal:
         if self.enviroment.foodList:
             foodDists = []
             for food in self.enviroment.foodList:
-                tmp = math.sqrt((food.x - self.x)**2 + (food.y - self.y)**2)
+                tmp = math.sqrt((food.x - self.x) ** 2 + (food.y - self.y) ** 2)
                 foodDists.append(tmp)
             food = self.enviroment.foodList[foodDists.index(min(foodDists))]
             dist2food = min(foodDists)
             if dist2food <= self.speed:
-                self.x,self.y = food.x,food.y
+                self.x, self.y = food.x, food.y
                 self.energy -= dist2food * self.speed
             else:
                 if food.x - self.x != 0 and food.y - self.y != 0:
@@ -139,6 +156,25 @@ class Animal:
         else:
             self.energy -= 0.5 * self.size
 
+        HuntList = []
+        for hun in self.enviroment.animals: #цикл для поиска меньших особей
+            if hun.size < self.size:
+                HuntList.append(hun)
+        HuntListMin = self.enviroment.animals[0]
+        for i in range(len(HuntList)): #цикл для поиска ближайших особей из предыдущего цыкла
+            if Dist2Point(self.x, self.y, HuntListMin.x, HuntListMin.y) < Dist2Point(self.x, self.y, HuntList[i].x, HuntList[i].y):
+                HuntListMin = HuntList[i]
+
+        if self.x < HuntListMin.x: #ОХОТА!
+            self.x += self.speed
+        if self.y < HuntListMin.y:
+            self.y += self.speed
+        if self.x > HuntListMin.x:
+            self.x -= self.speed
+        if self.y > HuntListMin.y:
+            self.y -= self.speed
+        print(self.x,self.y)
+
     def eat(self, food):
         self.energy += ENERGY_PER_FOOD
         self.enviroment.deleteFood(food)
@@ -147,6 +183,7 @@ class Animal:
         self.energy -= REPRODUCE_COST
         child_speed = self.speed
         child_size = self.size
+        child_color = self.color
         if random.random() < BASIC_MUTATION_RATE:
             mutation_speed_grade = random.random()
             mutation_size_grade = random.random()
@@ -157,13 +194,9 @@ class Animal:
             if random.random() > 0.5:
                 mutation_size_grade += 1
             else:
-                mutation_grade -= 1
-            self.enviroment.addAnimal(self.x, self.y, mutation_grade * self.speed, mutation_grade * self.size)
-        else:
-            self.enviroment.addAnimal(self.x, self.y, self.speed, self.size)
                 mutation_size_grade = 1 - mutation_size_grade
             child_speed *= mutation_speed_grade
-            child_size *=  mutation_size_grade
+            child_size *= mutation_size_grade
         child_speed = child_speed % 50
         if child_size < 5:
             child_size = 5
@@ -180,13 +213,13 @@ class Camera():
         self.x += x
         self.y += y
 
+
 class AnimalUpdateThread(threading.Thread):
     def __init__(self, widget):
         super().__init__()
         self.widget = widget
         self.lock = threading.Lock()
         self.isRunning = True
-
     def run(self):
         while self.isRunning:
             if (self.widget.isActive):
@@ -204,7 +237,7 @@ class AnimalUpdateThread(threading.Thread):
                     self.widget.enviroment.addFood()
                 if random.random() < FOOD_SPAWN_RATE:
                     self.widget.enviroment.addFood()
-                self.widget.enviroment.time += 1    
+                self.widget.enviroment.time += 1
                 self.lock.release()
                 self.widget.update()
                 time.sleep(turn_delay)

@@ -11,15 +11,15 @@ WINDOW_WIDTH = 600
 WINDOW_TOP = 150
 WINDOW_LEFT = 150
 WINDOW_TITLE = "Evolution simulation"
-CAMERA_SHIFT = 3
+CAMERA_SHIFT = 30
 ENV_SIZE = 100
 TILE_SIZE = 5
 ANIMAL_SIZE = 10
 
 class mywindow(QtWidgets.QMainWindow): # Класс с основным окном
 
-    def addAnimal(self, x, y, energy): # Функция, которая добавляет животное с заданными параметрами
-        self.enviroment.addAnimal(0, 0, 5, ANIMAL_SIZE)
+    def addAnimal(self, x, y, energy, size): # Функция, которая добавляет животное с заданными параметрами
+        self.enviroment.addAnimal(x, y, energy, size)
         self.update()
 
     def deleteAnimal(self, animal): # Функция, которая удаляет животное, переданное в функцию
@@ -70,7 +70,9 @@ class mywindow(QtWidgets.QMainWindow): # Класс с основным окно
         self.isActive = True # Запускаем симуляцию
 
         self.InitWindow() # Инициализируем окно
-        self.addAnimal(0, 0, 500) # Создаем начальное животное
+
+        self.addAnimal(100, 0, 500,12)  # Создаем начальное животное
+        self.addAnimal(0, 0, 500,14)
 
         self.animalUpdateThread = classlib.AnimalUpdateThread(self) # Инициализируем поток, который обрабатывает изменения 
         self.animalUpdateThread.start() # Запускаем поток
@@ -84,6 +86,6 @@ app = QtWidgets.QApplication([])
 
 application = mywindow()
 
-application.addAnimal(0, 0, 500)
+#print(len(application.enviroment.animals))
 
 sys.exit(app.exec())
