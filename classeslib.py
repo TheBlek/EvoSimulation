@@ -8,7 +8,7 @@ import time
 import math
 import sys
 
-turn_delay = 0.01
+turn_delay = 0
 food_size = 10
 ENERGY_PER_FOOD = 1000
 START_ENERGY = 100
@@ -66,7 +66,6 @@ class Enviroment: # Класс окружающей среды
         self.Tiles = [None] * width * height
         self.foodList = []
         self.animals =[]
-        self.time = 0
         self.population = []
         for i in range(width * height):
             self.Tiles[i] = Tile(i, int(i / width) * tilesize, i % width * tilesize, tilesize)
@@ -143,7 +142,7 @@ class Animal:
                 else:
                     self.y += self.speed * self.speed * self.size * sign(food.y - self.y)
         else:
-            self.energy -= 0.5 * self.size
+            self.energy -= self.size
 
     def eat(self, food):
         self.energy += ENERGY_PER_FOOD
@@ -208,7 +207,6 @@ class AnimalUpdateThread(threading.Thread):
                     self.widget.enviroment.addFood()
                 if random.random() < FOOD_SPAWN_RATE:
                     self.widget.enviroment.addFood()
-                self.widget.enviroment.time += 1
                 self.widget.enviroment.population.append(len(self.widget.enviroment.animals))
                 self.lock.release()
                 self.widget.update()

@@ -1,5 +1,6 @@
 import random
 import sys
+import threading
 
 import pyqtgraph as pg
 import numpy as np
@@ -22,11 +23,11 @@ class mywindow(QtWidgets.QMainWindow): # Класс с основным окно
 
     def addAnimal(self, x, y, energy): # Функция, которая добавляет животное с заданными параметрами
         self.enviroment.addAnimal(x, y, 5, ANIMAL_SIZE)
-        self.update()
+        #self.update()
 
     def deleteAnimal(self, animal): # Функция, которая удаляет животное, переданное в функцию
         self.enviroment.deleteAnimal(animal)
-        self.update()
+        #self.update()
 
     def paintEvent(self, event):
         self.UpdateGraph()
@@ -54,7 +55,7 @@ class mywindow(QtWidgets.QMainWindow): # Класс с основным окно
         if event.key() == 68: # 68 - это d. Здесь камера сдвигается вправо
             camera_velosity[0] += CAMERA_SHIFT
         self.camera.move(camera_velosity[0], camera_velosity[1])
-        self.repaint()
+        #self.repaint()
 
     def closeEvent(self, event):
         self.animalUpdateThread.stop() # Перед выключением - подаем потоку сигнал выключиться
@@ -92,9 +93,10 @@ class mywindow(QtWidgets.QMainWindow): # Класс с основным окно
         self.plt.setLabel('bottom', 'Time', units='s')
 
     def UpdateGraph(self):
-        x = range(0, self.enviroment.time)
-        c = self.plt.plot(x, self.enviroment.population, pen='r', name='main animal', clear=True)
-
+        self.animalUpdateThread.lock.acquire()
+        y = self.enviroment.population
+        c = self.plt.plot(range(0, len(y)), y, pen='r', name='main animal', clear=True)
+        self.animalUpdateThread.lock.release()  
 
 app = QtWidgets.QApplication([])
 
