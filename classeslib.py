@@ -8,19 +8,22 @@ import time
 import math
 import sys
 
-turn_delay = 0.1
+turn_delay = 0.5
 food_size = 10
 ENERGY_PER_FOOD = 1000
 START_ENERGY = 100
 REPRODUCE_COST = 5000
 BASIC_MUTATION_RATE = 0.1
 FOOD_SPAWN_RATE = 0.1
+hp_size = 10
+dmg_size = 2
 IDan = 0
-
 
 def sign(num):  # Функция возвращения знака числа. Если 0 - возвращает 1
     return -1 if num < 0 else 1
 
+#def Collision(obj1, obj2):
+#   if obj1.x + obj1.size > obj2.x and obj1.x < obj.2:
 
 def Dist2Point(x1, y1, x2, y2):  # Функция, которая возвращает расстояние между двумя точками по их координатам
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)  # Использована простая теорема пифагора
@@ -75,7 +78,7 @@ class Enviroment:  # Класс окружающей среды
         self.Tiles = [None] * width * height
         self.foodList = []
         self.animals = []
-        self.time = 0
+        self.population = []
         for i in range(width * height):
             self.Tiles[i] = Tile(i, int(i / width) * tilesize, i % width * tilesize, tilesize)
 
@@ -103,19 +106,24 @@ class Enviroment:  # Класс окружающей среды
 
 class Animal:
     def __init__(self, x, y, speed, size, enviroment):
+        global IDan
+        IDan = IDan + 1
         self.x = x
         self.y = y
         self.energy = START_ENERGY * size
         self.speed = speed
         self.size = size
         self.enviroment = enviroment
-        self.ID = IDan + 1
+        self.HP = size * hp_size
+        self.dmg = size * dmg_size
+        self.ID = IDan
 
         color = self.speed ** 6
         color = math.floor(color)
         color = color % 16711680
         color = hex(color).split('x')[-1]
         self.color = '#' + '0' * (6 - len(color)) + color
+
 
     def draw(self, qpainter, camera):
         brush = QBrush(QColor(self.color))
@@ -125,47 +133,46 @@ class Animal:
         qpainter.drawRect(xCoord, yCoord, self.size, self.size)
 
     def isDead(self):
-        assert (self.energy > 0)
+        assert (self.energy > 0 and self.HP > 0)
 
     def update(self):
         self.isDead()
-        if self.energy > REPRODUCE_COST * self.size + 300:
-            self.reproduce()
-        if self.enviroment.foodList:
-            foodDists = []
-            for food in self.enviroment.foodList:
-                tmp = math.sqrt((food.x - self.x) ** 2 + (food.y - self.y) ** 2)
-                foodDists.append(tmp)
-            food = self.enviroment.foodList[foodDists.index(min(foodDists))]
-            dist2food = min(foodDists)
-            if dist2food <= self.speed:
-                self.x, self.y = food.x, food.y
-                self.energy -= dist2food * self.speed
-            else:
-                if food.x - self.x != 0 and food.y - self.y != 0:
-                    targetTG = abs(food.y - self.y) / abs(food.x - self.x)
-                    x = self.speed / math.sqrt(targetTG ** 2 + 1)
-                    y = x * targetTG
-                    x *= sign(food.x - self.x)
-                    y *= sign(food.y - self.y)
-                    self.x += x
-                    self.y += y
-                    self.energy -= self.speed
-                else:
-                    self.y += self.speed * self.speed * self.size * sign(food.y - self.y)
-        else:
-            self.energy -= 0.5 * self.size
-
+        # if self.energy > REPRODUCE_COST * self.size + 300:
+        #     self.reproduce()
+        # if self.enviroment.foodList:
+        #     foodDists = []
+        #     for food in self.enviroment.foodList:
+        #         tmp = math.sqrt((food.x - self.x) ** 2 + (food.y - self.y) ** 2)
+        #         foodDists.append(tmp)
+        #     food = self.enviroment.foodList[foodDists.index(min(foodDists))]
+        #     dist2food = min(foodDists)
+        #     if dist2food <= self.speed:
+        #         self.x, self.y = food.x, food.y
+        #         self.energy -= dist2food * self.speed
+        #     else:
+        #         if food.x - self.x != 0 and food.y - self.y != 0:
+        #             targetTG = abs(food.y - self.y) / abs(food.x - self.x)
+        #             x = self.speed / math.sqrt(targetTG ** 2 + 1)
+        #             y = x * targetTG
+        #             x *= sign(food.x - self.x)
+        #             y *= sign(food.y - self.y)
+        #             self.x += x
+        #             self.y += y
+        #             self.energy -= self.speed
+        #         else:
+        #             self.y += self.speed * self.speed * self.size * sign(food.y - self.y)
+        # else:
+        #     self.energy -= self.size
         HuntList = []
-        for hun in self.enviroment.animals: #цикл для поиска меньших особей
-            if hun.size < self.size:
+        for hun in self.enviroment.animals:  # цикл для поиска меньших особей
+            if hun.size < self.size and hun.ID != self.ID:
                 HuntList.append(hun)
         HuntListMin = self.enviroment.animals[0]
-        for i in range(len(HuntList)): #цикл для поиска ближайших особей из предыдущего цыкла
-            if Dist2Point(self.x, self.y, HuntListMin.x, HuntListMin.y) < Dist2Point(self.x, self.y, HuntList[i].x, HuntList[i].y):
+        for i in range(len(HuntList)):  # цикл для поиска ближайших особей из предыдущего цикла
+            if Dist2Point(self.x, self.y, HuntListMin.x, HuntListMin.y) < Dist2Point(self.x, self.y, HuntList[i].x, HuntList[i].y) and HuntListMin.ID != self.ID:
                 HuntListMin = HuntList[i]
 
-        if self.x < HuntListMin.x: #ОХОТА!
+        if self.x < HuntListMin.x:  # ОХОТА!
             self.x += self.speed
         if self.y < HuntListMin.y:
             self.y += self.speed
@@ -173,14 +180,14 @@ class Animal:
             self.x -= self.speed
         if self.y > HuntListMin.y:
             self.y -= self.speed
-        print(self.x,self.y)
+        print("i:", self.ID, "hunt:", HuntListMin.ID)
 
     def eat(self, food):
         self.energy += ENERGY_PER_FOOD
         self.enviroment.deleteFood(food)
 
     def reproduce(self):
-        self.energy -= REPRODUCE_COST
+        self.energy -= REPRODUCE_COST * self.size
         child_speed = self.speed
         child_size = self.size
         child_color = self.color
@@ -202,6 +209,7 @@ class Animal:
             child_size = 5
         self.enviroment.addAnimal(self.x + 1, self.y + 1, child_speed, child_size)
 
+
 class Camera():
     def __init__(self, width_of_vision, height_of_vision, x=0, y=0):
         self.x = 0
@@ -220,10 +228,13 @@ class AnimalUpdateThread(threading.Thread):
         self.widget = widget
         self.lock = threading.Lock()
         self.isRunning = True
+
     def run(self):
         while self.isRunning:
             if (self.widget.isActive):
                 self.lock.acquire()
+                if len(self.widget.enviroment.animals) == 0:
+                    self.stop()
                 for animal in self.widget.enviroment.animals:
                     for food in self.widget.enviroment.foodList:
                         if Animal2FoodCollision(animal, food):
@@ -232,12 +243,11 @@ class AnimalUpdateThread(threading.Thread):
                         animal.update()
                     except AssertionError:
                         self.widget.enviroment.deleteAnimal(animal)
-
                 for i in range(math.floor(FOOD_SPAWN_RATE)):
                     self.widget.enviroment.addFood()
                 if random.random() < FOOD_SPAWN_RATE:
                     self.widget.enviroment.addFood()
-                self.widget.enviroment.time += 1
+                self.widget.enviroment.population.append(len(self.widget.enviroment.animals))
                 self.lock.release()
                 self.widget.update()
                 time.sleep(turn_delay)
