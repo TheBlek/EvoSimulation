@@ -22,7 +22,7 @@ ANIMAL_SIZE = 10
 class mywindow(QtWidgets.QMainWindow): # Класс с основным окном
 
     def addAnimal(self, x, y, energy): # Функция, которая добавляет животное с заданными параметрами
-        self.enviroment.addAnimal(x, y, 5, ANIMAL_SIZE)
+        self.enviroment.addAnimal(x, y, 5, ANIMAL_SIZE, True)
         #self.update()
 
     def deleteAnimal(self, animal): # Функция, которая удаляет животное, переданное в функцию
